@@ -7,17 +7,16 @@ namespace Task1;
 
 public partial class App : Application
 {
-	public static IConfigurationRoot? _configuration;
-
 	private static RegisterWindow? _registerWindow;
-	public static RegisterWindow? RegisterWindow { get => _registerWindow; set => _registerWindow = value; }
-
 	private static LoginWindow? _loginWindow;
+
+	public static IConfigurationRoot? Configuration { get; set; }
+	public static RegisterWindow? RegisterWindow { get => _registerWindow; set => _registerWindow = value; }
 	public static LoginWindow? LoginWindow { get => _loginWindow; set => _loginWindow = value; }
 
 	private void StartApp(object sender, StartupEventArgs e)
 	{
-		_configuration = new ConfigurationBuilder()
+		Configuration = new ConfigurationBuilder()
 			.SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
 			.AddJsonFile("appsettings.json")
 			.Build();

@@ -7,10 +7,17 @@ namespace Task1;
 
 public partial class RegisterWindow : Window
 {
+	public string? ConnectionString { get; set; }
+	public SqlConnection? Connection { get; set; }
+	public SqlCommand? Cmd { get; set; }
+
 	public RegisterWindow()
 	{
 		InitializeComponent();
+
 		DataContext = this;
+
+		ConnectionString = App.Configuration!.GetConnectionString("DefaultConnection")!;
 	}
 
 	private void FinishRegisterButtonClickExecute(object sender, RoutedEventArgs e)
@@ -29,24 +36,22 @@ public partial class RegisterWindow : Window
 			return;
 		}
 
-		string connectionString = App._configuration!.GetConnectionString("DefaultConnection")!;
-
-		using (var sqlConnection = new SqlConnection(connectionString))
+		using (Connection = new SqlConnection(ConnectionString))
 		{
-			SqlCommand? command = new();
-			sqlConnection.Open();
+			Connection.Open();
 
-			string? insertQuery = $@"
+			string? query = $@"
 				USE [AppUsers];
 
 				INSERT INTO [MainUsers] 
 					([Name], [Surname], [Age], [Username], [Password])
 				VALUES 
-					('{NameTBox.Text}', '{SurnameTBox.Text}', {AgeTBox.Text}, '{UsernameTBox.Text}','{PasswordTBox.Text}');";
+					('{NameTBox.Text}', '{SurnameTBox.Text}', {AgeTBox.Text}, '{UsernameTBox.Text}','{PasswordTBox.Text}');
+			";
 
-			command.Connection = sqlConnection;
-			command.CommandText = insertQuery;
-			command.ExecuteNonQuery();
+			Cmd = new(query, Connection);
+
+			Cmd.ExecuteNonQuery();
 
 			MessageBox.Show("Register Successful !", "Message");
 		}

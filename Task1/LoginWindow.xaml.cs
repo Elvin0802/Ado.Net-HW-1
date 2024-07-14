@@ -7,25 +7,29 @@ namespace Task1;
 
 public partial class LoginWindow : Window
 {
-	public static string? connectionString { get; set; }
-	public SqlConnection? connection { get; set; }
-	SqlDataReader? reader { get; set; }
-	SqlCommand? cmd { get; set; }
+	public static string? ConnectionString { get; set; }
+	public SqlConnection? Connection { get; set; }
+	public SqlDataReader? Reader { get; set; }
+	public SqlCommand? Cmd { get; set; }
+
 	public LoginWindow()
 	{
 		InitializeComponent();
+
 		DataContext = this;
 
-		connectionString = App._configuration!.GetConnectionString("DefaultConnection")!;
-		connection = new SqlConnection(connectionString);
+		ConnectionString = App.Configuration!.GetConnectionString("DefaultConnection")!;
 	}
 
 	private void LoginButtonClickExecute(object sender, RoutedEventArgs e)
 	{
 		if (string.IsNullOrEmpty(UsernameTBox.Text) || string.IsNullOrEmpty(PasswordTBox.Text))
+		{
+			MessageBox.Show($"Please fill all lines.", "Message");
 			return;
+		}
 
-		using (connection)
+		using (Connection = new SqlConnection(ConnectionString))
 		{
 			var querry = @"
 							USE [AppUsers];
@@ -33,22 +37,24 @@ public partial class LoginWindow : Window
 							SELECT * FROM [MainUsers];
 						";
 
-			cmd = new(querry, connection);
+			Cmd = new(querry, Connection);
 
-			connection!.Open();
-			reader = cmd.ExecuteReader();
+			Connection!.Open();
+			Reader = Cmd.ExecuteReader();
 
-			while (reader.Read())
+			while (Reader.Read())
 			{
-				if (reader["Username"].ToString() == UsernameTBox.Text)
+				if (Reader["Username"].ToString() == UsernameTBox.Text)
 				{
-					if (reader["Password"].ToString() == PasswordTBox.Text)
+					if (Reader["Password"].ToString() == PasswordTBox.Text)
 					{
-						MessageBox.Show($"Welcome {reader["Name"]} {reader["Surname"]}.", "Message");
+						MessageBox.Show($"Welcome {Reader["Name"]} {Reader["Surname"]}.", "Message");
 						return;
 					}
 				}
 			}
+
+			MessageBox.Show($"Username or Password is incorrect.", "Message");
 		}
 	}
 
