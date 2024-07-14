@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 
@@ -17,8 +18,8 @@ public partial class App : Application
 	private void StartApp(object sender, StartupEventArgs e)
 	{
 		Configuration = new ConfigurationBuilder()
-			.SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-			.AddJsonFile("appsettings.json")
+			.SetBasePath(Directory.GetCurrentDirectory())
+			.AddJsonFile("Resources/appsettings.json")
 			.Build();
 
 		RegisterWindow = new();
