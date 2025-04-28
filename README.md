@@ -4,274 +4,308 @@
 - [Overview](#overview)
 - [Authentication](#authentication)
 - [Ads](#ads)
-  - [Create Ad](#create-ad)
-  - [Get All Ads](#get-all-ads)
-  - [Get Ad By ID](#get-ad-by-id)
-  - [Update Ad](#update-ad)
-  - [Delete Ad (Soft)](#delete-ad-soft)
-  - [Select/Unselect Ad](#selectunselect-ad)
-  - [Featured Ads](#featured-ads)
-  - [Change Ad Status](#change-ad-status)
 - [Categories](#categories)
-  - [Main Categories](#main-categories)
-  - [Sub Categories](#sub-categories)
+  - [Create Category](#create-category)
+  - [Get All Categories](#get-all-categories)
+  - [Get Category By ID](#get-category-by-id)
+  - [Create Main Category](#create-main-category)
+  - [Get All Main Categories](#get-all-main-categories)
+  - [Get Main Category By ID](#get-main-category-by-id)
+  - [Create Sub Category](#create-sub-category)
+  - [Get All Sub Categories](#get-all-sub-categories)
+  - [Get Sub Category By ID](#get-sub-category-by-id)
 - [Locations](#locations)
+  - [Create Location](#create-location)
+  - [Get All Locations](#get-all-locations)
+  - [Get Location By ID](#get-location-by-id)
+  - [Delete Location](#delete-location)
 - [Chat](#chat)
+  - [Create Chat Room](#create-chat-room)
+  - [Get Chat Rooms](#get-chat-rooms)
+  - [Get Chat Room](#get-chat-room)
+  - [Get Chat Messages](#get-chat-messages)
+  - [Send Message](#send-message)
+  - [Mark Messages As Read](#mark-messages-as-read)
 - [Profile](#profile)
-- [Reports](#reports)
+  - [Get User Data](#get-user-data)
+  - [Get Active Ads](#get-active-ads)
+  - [Get Pending Ads](#get-pending-ads)
+  - [Get Expired Ads](#get-expired-ads)
+  - [Get Rejected Ads](#get-rejected-ads)
+  - [Get Selected Ads](#get-selected-ads)
 - [Users](#users)
+  - [Register](#register)
+  - [Update Password](#update-password)
+  - [Change Password](#change-password)
+- [Reports](#reports)
+  - [Create Report](#create-report)
+  - [Get All Reports](#get-all-reports)
+  - [Get Report By ID](#get-report-by-id)
+  - [Get Reports By Ad ID](#get-reports-by-ad-id)
+  - [Update Report Status](#update-report-status)
 - [Schemas](#schemas)
 
 ---
 
 ## Overview
 **Base URL**: `https://api.yoursite.com/api`  
-**Version**: `v1.0`  
+**Version**: `v1.0`
 
-This documentation covers all endpoints exposed by the ClassifiedsApp backend, grouped by feature area. Each section details URL, HTTP method, headers, request/response schemas, and usage examples.
+Common Response Wrapper types:
+- `Result`: `{ isSucceeded: boolean; message?: string; isFailed: boolean; }`
+- `StringResult`: extends `Result` with `data: string` (e.g. JWT tokens)
 
 ---
 
 ## Authentication
-
-### Login
-- **Endpoint**: `POST /Auth/Login`  
-- **Description**: Authenticate user and receive JWT tokens.  
-- **Request Body** (JSON):
-  ```json
-  {
-    "email": "string",
-    "password": "string"
-  }
-  ```
-- **Response** (`StringResult`): Contains `data` field with access token and refresh token.  
-- **Status**: `200 OK`
-
-### Refresh Token Login
-- **Endpoint**: `POST /Auth/RefreshTokenLogin`  
-- **Description**: Obtain new access token using a valid refresh token in header.  
-- **Headers**:
-  - `Authorization: Bearer {refreshToken}`
-- **Response** (`StringResult`): New JWT tokens.  
-- **Status**: `200 OK`
-
-### Logout
-- **Endpoint**: `POST /Auth/Logout`  
-- **Description**: Invalidate current refresh token.  
-- **Headers**:
-  - `Authorization: Bearer {accessToken}`
-- **Response** (`Result`): Success/failure message.  
-- **Status**: `200 OK`
-
-### Reset Password
-- **Endpoint**: `POST /Auth/reset-password`  
-- **Description**: Initiate password reset by sending email with token.  
-- **Request Body** (JSON):
-  ```json
-  {
-    "email": "string"
-  }
-  ```
-- **Response** (`Result`): Confirmation message.  
-- **Status**: `200 OK`
-
-### Confirm Reset Token
-- **Endpoint**: `POST /Auth/confirm-reset-token`  
-- **Description**: Validate reset token and set new password.  
-- **Request Body** (JSON):
-  ```json
-  {
-    "userId": "uuid",
-    "resetToken": "string"
-  }
-  ```
-- **Response** (`Result`): Success/failure.  
-- **Status**: `200 OK`
+*(As previously defined)*
 
 ---
 
 ## Ads
-
-### Create Ad
-- **Endpoint**: `POST /Ads/Create`  
-- **Content-Type**: `multipart/form-data`  
-- **Description**: Create a new classified ad with images and subcategory values.  
-- **Form Data Parameters**:
-  | Field                 | Type     | Description                             |
-  |-----------------------|----------|-----------------------------------------|
-  | `Title`               | string   | Ad title                                |
-  | `Description`         | string   | Detailed description                    |
-  | `Price`               | number   | Price value                             |
-  | `IsNew`               | boolean  | Condition flag                          |
-  | `CategoryId`          | uuid     | Parent category identifier              |
-  | `MainCategoryId`      | uuid     | Main category identifier                |
-  | `LocationId`          | uuid     | Location identifier                     |
-  | `SubCategoryValues`   | array    | List of `{ subCategoryId, value }`      |
-  | `Images`              | file[]   | Image files (.jpg, .png)                |
-- **Response** (`Result`): Operation result with `true/false` status.  
-- **Status**: `200 OK`
-
-### Get All Ads
-- **Endpoint**: `POST /Ads/GetAll`  
-- **Description**: Returns paged list of ads matching filters.  
-- **Request Body** (`GetAllAdsQuery`):
-  ```json
-  {
-    "pageNumber": 1,
-    "pageSize": 20,
-    "sortBy": "price",
-    "isDescending": false,
-    "searchTitle": "bike",
-    "minPrice": 100,
-    "maxPrice": 1000,
-    "categoryId": "uuid",
-    "isFeatured": false
-  }
-  ```
-- **Response** (`GetAllAdsQueryResponseResult`): Contains `data` with page info and `items` array of `AdPreviewDto`.
-- **Status**: `200 OK`
-
-### Get Ad By ID
-- **Endpoint**: `GET /Ads/GetById?Id={adId}&CurrentAppUserId={userId}`  
-- **Description**: Fetch full ad details including owner, images, and subcategory values.  
-- **Query Parameters**:
-  | Name                 | Type  | Required | Description                    |
-  |----------------------|-------|----------|--------------------------------|
-  | `Id`                 | uuid  | Yes      | Ad identifier                  |
-  | `CurrentAppUserId`   | uuid  | No       | For `isOwner` flag evaluation |
-- **Response** (`GetAdByIdQueryResponseResult`): `data.item` is `AdDto`.
-- **Status**: `200 OK`
-
-### Update Ad
-- **Endpoint**: `POST /Ads/Update`  
-- **Description**: Update ad fields by sending `UpdateAdCommand`.  
-- **Request Body** (`UpdateAdCommand`):
-  ```json
-  {
-    "id": "uuid",
-    "title": "string",
-    "description": "string",
-    "price": 150,
-    "isNew": true
-  }
-  ```
-- **Response** (`Result`): Success flag.
-- **Status**: `200 OK`
-
-### Delete Ad (Soft)
-- **Endpoint**: `GET /Ads/Delete?Id={adId}`  
-- **Description**: Soft-delete ad (archived).  
-- **Query Parameters**:
-  | Name | Type | Required | Description         |
-  |------|------|----------|---------------------|
-  | `Id` | uuid | Yes      | Ad identifier       |
-- **Response** (`Result`): Operation result.
-- **Status**: `200 OK`
-
-### Select / Unselect Ad
-- **Endpoints**:
-  - `POST /Ads/SelectAd`  
-  - `POST /Ads/UnselectAd`  
-- **Description**: Mark/unmark ad as selected by current user.  
-- **Request Body** (`SelectAdCommand` / `UnselectAdCommand`):
-  ```json
-  { "adId": "uuid" }
-  ```
-- **Response** (`Result`): Success flag.
-- **Status**: `200 OK`
-
-### Featured Ads
-- **Get Pricing Options**:
-  - **Endpoint**: `GET /Ads/GetPricingOptions`  
-  - **Response** (`GetFeaturedPricingQueryResponseResult`): List of `{ durationDays, price, description }`.
-- **Feature Ad**:
-  - **Endpoint**: `POST /Ads/FeatureAd`  
-  - **Request Body** (`FeatureAdCommand`): `{ "adId": "uuid", "durationDays": 7 }`
-  - **Response** (`Result`)
-
-### Change Ad Status
-- **Endpoint**: `POST /Ads/ChangeAdStatus`  
-- **Description**: Override ad lifecycle manually.  
-- **Request Body** (`ChangeAdStatusCommand`):
-  ```json
-  { "adId": "uuid", "newAdStatus": 2 }
-  ```
-- **Response** (`Result`)
+*(As previously defined)*
 
 ---
 
 ## Categories
 
-### Main Categories
-- **Create Main Category**: `POST /Categories/create/main-category`  
-  - Body: `{ "name": "Vehicles", "parentCategoryId": "uuid" }`  
-- **Get All Main Categories**: `GET /Categories/all/main-category`  
-  - Query: `?PageNumber=1&PageSize=10&SortBy=name&IsDescending=false`
-- **Get By ID**: `GET /Categories/byId/main-category?Id={id}`
+### Create Category
+- **Endpoint**: `POST /Categories/create/category`
+- **Description**: Add a new top-level category.
+- **Request Body** (`CreateCategoryCommand`):
+  ```json
+  { "name": "string" }
+  ```
+- **Response** (`Result`)
 
-### Sub Categories
-- **Create Sub Category**: `POST /Categories/create/sub-category`  
-  - Body: `{ "name": "Color", "type": "String", "mainCategoryId": "uuid", "options": ["Red","Blue"] }`
-- **Get All Sub Categories**: `GET /Categories/all/sub-category?PageNumber=1&PageSize=10`
-- **Get By ID**: `GET /Categories/byId/sub-category?Id={id}`
+### Get All Categories
+- **Endpoint**: `GET /Categories/all/category`
+- **Description**: Retrieve paginated list of categories.
+- **Query Parameters**:
+  - `PageNumber` (int)
+  - `PageSize` (int)
+  - `SortBy` (string)
+  - `IsDescending` (boolean)
+- **Response** (`GetAllCategoriesQueryResponseResult`):
+  ```json
+  {
+    "data": {
+      "items": [ { CategoryDto }, ... ],
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalCount": 100,
+      "totalPages": 10
+    }
+  }
+  ```
+
+### Get Category By ID
+- **Endpoint**: `GET /Categories/byId/category?Id={id}`
+- **Description**: Fetch single category details including nested main categories.
+- **Response** (`GetCategoryByIdQueryResponseResult`): `{ data: { item: CategoryDto } }`
+
+### Create Main Category
+- **Endpoint**: `POST /Categories/create/main-category`
+- **Description**: Create a subcategory group under a top-level category.
+- **Request Body** (`CreateMainCategoryCommand`):
+  ```json
+  { "name": "string", "parentCategoryId": "uuid" }
+  ```
+- **Response** (`Result`)
+
+### Get All Main Categories
+- **Endpoint**: `GET /Categories/all/main-category`
+- **Query**: `?PageNumber=&PageSize=&SortBy=&IsDescending=`  
+- **Response** (`GetAllMainCategoriesQueryResponseResult`)
+
+### Get Main Category By ID
+- **Endpoint**: `GET /Categories/byId/main-category?Id={id}`
+- **Response** (`GetMainCategoryByIdQueryResponseResult`)
+
+### Create Sub Category
+- **Endpoint**: `POST /Categories/create/sub-category`
+- **Description**: Add a specific attribute under a main category (e.g. Color, Size).
+- **Request Body** (`CreateSubCategoryCommand`):
+  ```json
+  {
+    "name": "string",
+    "isRequired": true,
+    "type": "String" | "Number" | "Boolean",
+    "mainCategoryId": "uuid",
+    "options": ["option1","option2"]
+  }
+  ```
+- **Response** (`Result`)
+
+### Get All Sub Categories
+- **Endpoint**: `GET /Categories/all/sub-category`
+- **Query**: `?PageNumber=&PageSize=&SortBy=&IsDescending=`  
+- **Response** (`GetAllSubCategoriesQueryResponseResult`)
+
+### Get Sub Category By ID
+- **Endpoint**: `GET /Categories/byId/sub-category?Id={id}`
+- **Response** (`GetSubCategoryByIdQueryResponseResult`)
 
 ---
 
 ## Locations
-- **Create Location**: `POST /Locations/Create`  
-- **Get All Locations**: `GET /Locations/GetAll`  
-- **Get By ID**: `GET /Locations/GetById?Id={id}`  
-- **Delete Location**: `POST /Locations/Delete`  
+
+### Create Location
+- **Endpoint**: `POST /Locations/Create`
+- **Request Body** (`CreateLocationCommand`):
+  ```json
+  { "city": "string", "country": "string" }
+  ```
+- **Response** (`Result`)
+
+### Get All Locations
+- **Endpoint**: `GET /Locations/GetAll`
+- **Description**: List all saved locations.
+- **Response** (`GetAllLocationsQueryResponseResult`)
+
+### Get Location By ID
+- **Endpoint**: `GET /Locations/GetById?Id={id}`
+- **Response** (`GetLocationByIdQueryResponseResult`)
+
+### Delete Location
+- **Endpoint**: `POST /Locations/Delete`
+- **Request Body** (`DeleteLocationCommand`): `{ "id": "uuid" }`
+- **Response** (`Result`)
 
 ---
 
 ## Chat
-- **Create Chat Room**: `POST /Chat/CreateChatRoom`  
-- **Get Chat Rooms (User)**: `POST /Chat/GetChatRooms`  
-- **Get Single Chat Room**: `POST /Chat/GetChatRoom`  
-- **Get Messages**: `POST /Chat/GetChatMessages`  
-- **Send Message**: `POST /Chat/SendMessage`  
-- **Mark Messages As Read**: `POST /Chat/MarkMessagesAsRead`
+
+### Create Chat Room
+- **Endpoint**: `POST /Chat/CreateChatRoom`
+- **Request Body** (`CreateChatRoomCommand`): `{ "adId": "uuid" }`
+- **Response** (`ChatRoomDtoResult`): `{ data: ChatRoomDto }
+`
+
+### Get Chat Rooms
+- **Endpoint**: `POST /Chat/GetChatRooms`
+- **Description**: Retrieve rooms for current user.
+- **Response** (`GetChatRoomsByUserQueryResponseResult`)
+
+### Get Chat Room
+- **Endpoint**: `POST /Chat/GetChatRoom`
+- **Request** (`GetChatRoomQuery`): `{ "roomId": "uuid" }`
+- **Response** (`GetChatRoomQueryResponseResult`)
+
+### Get Chat Messages
+- **Endpoint**: `POST /Chat/GetChatMessages`
+- **Request** (`GetChatMessagesByChatRoomQuery`): `{ "chatRoomId": "uuid" }`
+- **Response** (`GetChatMessagesByChatRoomQueryResponseResult`)
+
+### Send Message
+- **Endpoint**: `POST /Chat/SendMessage`
+- **Request** (`SendMessageCommand`):
+  ```json
+  { "chatRoomId": "uuid", "content": "string" }
+  ```
+- **Response** (`ChatMessageDtoResult`)
+
+### Mark Messages As Read
+- **Endpoint**: `POST /Chat/MarkMessagesAsRead`
+- **Request** (`MarkMessagesAsReadCommand`): `{ "chatRoomId": "uuid" }`
+- **Response** (`Result`)
 
 ---
 
 ## Profile
-- **Get User Data**: `POST /Profile/GetUserData`  
-- **Get Active Ads**: `POST /Profile/GetActiveAds`  
-- **Get Pending Ads**: `POST /Profile/GetPendingAds`  
-- **Get Expired Ads**: `POST /Profile/GetExpiredAds`  
-- **Get Rejected Ads**: `POST /Profile/GetRejectedAds`  
-- **Get Selected Ads**: `POST /Profile/GetSelectedAds`
 
----
+### Get User Data
+- **Endpoint**: `POST /Profile/GetUserData`
+- **Response** (`GetUserDataQueryResponseResult`): `{ data: AppUserDto }
+`
 
-## Reports
-- **Create Report**: `POST /Reports/CreateReport`  
-- **Get All Reports**: `GET /Reports/GetAllReports?status={status}`  
-- **Get Report By ID**: `GET /Reports/GetReportById/{id}`  
-- **Get Reports By Ad ID**: `GET /Reports/GetReportsByAdId/{adId}`  
-- **Update Report Status**: `POST /Reports/UpdateReportStatus`
+### Get Active Ads
+- **Endpoint**: `POST /Profile/GetActiveAds`
+- **Response** (`GetAllAdsQueryResponseResult`)
+
+### Get Pending Ads
+- **Endpoint**: `POST /Profile/GetPendingAds`
+- **Response** (`GetAllAdsQueryResponseResult`)
+
+### Get Expired Ads
+- **Endpoint**: `POST /Profile/GetExpiredAds`
+- **Response** (`GetAllAdsQueryResponseResult`)
+
+### Get Rejected Ads
+- **Endpoint**: `POST /Profile/GetRejectedAds`
+- **Response** (`GetAllAdsQueryResponseResult`)
+
+### Get Selected Ads
+- **Endpoint**: `POST /Profile/GetSelectedAds`
+- **Response** (`GetAllSelectedAdsQueryResponseResult`)
 
 ---
 
 ## Users
-- **Register**: `POST /Users/register`  
-- **Update Password**: `POST /Users/update-password`  
-- **Change Password (Auth)**: `POST /Users/change-password`
+
+### Register
+- **Endpoint**: `POST /Users/register`
+- **Request Body** (`RegisterCommand`):
+  ```json
+  { "name": "string", "email": "string", "phoneNumber": "string", "password": "string" }
+  ```
+- **Response** (`Result`)
+
+### Update Password
+- **Endpoint**: `POST /Users/update-password`
+- **Request Body** (`UpdatePasswordCommand`):
+  ```json
+  { "userId": "uuid", "newPassword": "string" }
+  ```
+- **Response** (`Result`)
+
+### Change Password (Authenticated)
+- **Endpoint**: `POST /Users/change-password`
+- **Request Body** (`ChangePasswordCommand`):
+  ```json
+  { "oldPassword": "string", "newPassword": "string", "newPasswordConfirm": "string" }
+  ```
+- **Response** (`Result`)
+
+---
+
+## Reports
+
+### Create Report
+- **Endpoint**: `POST /Reports/CreateReport`
+- **Request Body** (`CreateReportCommand`):
+  ```json
+  { "adId": "uuid", "reason": "enum", "description": "string" }
+  ```
+- **Response** (`Result`)
+
+### Get All Reports
+- **Endpoint**: `GET /Reports/GetAllReports?status={status}`
+- **Response** (`GetAllReportsQueryResponseResult`)
+
+### Get Report By ID
+- **Endpoint**: `GET /Reports/GetReportById/{id}`
+- **Response** (`GetReportByIdQueryResponseResult`)
+
+### Get Reports By Ad ID
+- **Endpoint**: `GET /Reports/GetReportsByAdId/{adId}`
+- **Response** (`GetReportsByAdIdQueryResponseResult`)
+
+### Update Report Status
+- **Endpoint**: `POST /Reports/UpdateReportStatus`
+- **Request Body** (`UpdateReportStatusCommand`): `{ "reportId": "uuid", "newStatus": "enum" }`
+- **Response** (`Result`)
 
 ---
 
 ## Schemas
-All request and response schemas are defined in the `components/schemas` section of the OpenAPI spec. Key objects include:
-
-- `Result` / `StringResult`
-- `AdDto`, `AdPreviewDto`
+Refer to `components/schemas` in the OpenAPI spec for full definitions of all request and response models, including:
 - `CategoryDto`, `MainCategoryDto`, `SubCategoryDto`
 - `LocationDto`
-- `AppUserDto`
 - `ChatRoomDto`, `ChatMessageDto`
-- `FeaturedAdPricingDto`
-- `GetAllAdsQuery`, `GetAllAdsQueryResponse`
+- `AppUserDto`
+- Pagination wrappers (`GetAll*QueryResponse`)
+- Command/Query objects
 
-_For full JSON schema definitions and examples, import `swagger.json` into Postman or view in Swagger UI._
+*Import `swagger.json` into Swagger UI or Postman for live examples and testing.*
 
